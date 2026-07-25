@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Task Tracker</title>
+
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f5f7fb;
+            --panel: #ffffff;
+            --border: #dfe5ee;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --accent: #2563eb;
+            --accent-soft: #dbeafe;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        header {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            color: #ffffff;
+            padding: 24px 28px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+            margin-bottom: 24px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+            font-size: 2rem;
+        }
+
+        header p {
+            margin: 0;
+            color: #d1d5db;
+        }
+
+        /* =========================
+           BUTTONS
+        ========================= */
+
+        .header-button,
+        .primary-button,
+        .secondary-button {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .header-button,
+        .primary-button {
+            background: var(--accent);
+            color: #ffffff;
+        }
+
+        .header-button:hover,
+        .primary-button:hover {
+            background: #1d4ed8;
+        }
+
+        .secondary-button {
+            background: #e5e7eb;
+            color: var(--text);
+        }
+
+        .secondary-button:hover {
+            background: #d1d5db;
+        }
+
+        /* =========================
+           BOARD
+        ========================= */
+
+        .board {
+            display: grid;
+
+            /* Three columns on desktop */
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+
+            gap: 18px;
+        }
+
+        .column {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            min-height: 320px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+
+        .column__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .column__header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .column__count {
+            font-size: 0.9rem;
+            color: var(--muted);
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 999px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* =========================
+           TASK CARDS
+        ========================= */
+
+        .task-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            background: #fcfdff;
+            cursor: grab;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+
+        .task-card.is-dragging {
+            opacity: 0.7;
+            transform: scale(0.98);
+        }
+
+        .column.is-drop-target {
+            outline: 2px dashed var(--accent);
+            background: #f8fbff;
+        }
+
+        .task-card__title {
+            margin: 0 0 6px;
+            font-size: 1rem;
+        }
+
+        .task-card__description {
+            margin: 0 0 10px;
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .task-card__meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .pill--priority {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .pill--assignee {
+            background: #f3f4f6;
+            color: var(--text);
+        }
+
+        .task-card__actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .edit-button {
+            border: none;
+            background: #111827;
+            color: #ffffff;
+            padding: 7px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .edit-button:hover {
+            background: #1f2937;
+        }
+
+        /* =========================
+           ERROR MESSAGES
+        ========================= */
+
+        .error-message,
+        .form-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 18px;
+            display: none;
+        }
+
+        /* =========================
+           MODAL
+        ========================= */
+
+        .modal {
+            position: fixed;
+            inset: 0;
+
+            display: none;
+            align-items: center;
+            justify-content: center;
+
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .modal.is-open {
+            display: flex;
+        }
+
+        .modal__backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+        }
+
+        /*
+            Smaller modal.
+            No internal scrollbar.
+        */
+        .modal__dialog {
+            position: relative;
+
+            width: min(92%, 520px);
+
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+
+            padding: 22px 24px;
+
+            box-shadow: 0 16px 48px rgba(15, 23, 42, 0.2);
+
+            z-index: 1;
+        }
+
+        .modal__close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+
+            border: none;
+            background: transparent;
+            color: var(--muted);
+
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+
+        .modal__title {
+            margin: 0 0 6px;
+            font-size: 1.35rem;
+        }
+
+        .modal__subtitle {
+            margin: 0 0 16px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        /* =========================
+           FORM
+        ========================= */
+
+        .form__field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+
+            /* Smaller spacing */
+            margin-bottom: 10px;
+        }
+
+        .form__field label {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form__field input,
+        .form__field select,
+        .form__field textarea {
+            width: 100%;
+
+            border: 1px solid var(--border);
+            border-radius: 8px;
+
+            padding: 9px 11px;
+
+            font: inherit;
+            color: var(--text);
+            background: #ffffff;
+        }
+
+        .form__field input:focus,
+        .form__field select:focus,
+        .form__field textarea:focus {
+            outline: 2px solid var(--accent-soft);
+            border-color: var(--accent);
+        }
+
+        .form__field textarea {
+            min-height: 78px;
+            resize: vertical;
+        }
+
+        /*
+            Do not reserve empty space
+            when there is no field error.
+        */
+        .field-error {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #b91c1c;
+        }
+
+        .field-error:empty {
+            display: none;
+        }
+
+        .form__actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 900px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            /*
+                Only small screens become
+                one column.
+            */
+            .board {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page">
+
+        <!-- Header -->
+        <header>
+            <div>
+                <h1>Task Tracker</h1>
+                <p>Keep work moving from planning to completion.</p>
+            </div>
+
+            <button
+                class="header-button"
+                id="new-task-button"
+                type="button"
+            >
+                New Task
+            </button>
+        </header>
+
+        <!-- General error -->
+        <p
+            id="error-message"
+            class="error-message"
+        ></p>
+
+        <!-- Board -->
+        <main
+            class="board"
+            aria-label="Task tracker board"
+        >
+
+            <!-- TO DO -->
+            <section
+                class="column"
+                data-status="ToDo"
+            >
+                <div class="column__header">
+                    <h2>To Do</h2>
+
+                    <span
+                        class="column__count"
+                        data-count
+                    >
+                        0
+                    </span>
+                </div>
+
+                <div
+                    class="task-list"
+                    data-task-list
+                ></div>
+            </section>
+
+            <!-- IN PROGRESS -->
+            <section
+                class="column"
+                data-status="InProgress"
+            >
+                <div class="column__header">
+                    <h2>In Progress</h2>
+
+                    <span
+                        class="column__count"
+                        data-count
+                    >
+                        0
+                    </span>
+                </div>
+
+                <div
+                    class="task-list"
+                    data-task-list
+                ></div>
+            </section>
+
+            <!-- DONE -->
+            <section
+                class="column"
+                data-status="Done"
+            >
+                <div class="column__header">
+                    <h2>Done</h2>
+
+                    <span
+                        class="column__count"
+                        data-count
+                    >
+                        0
+                    </span>
+                </div>
+
+                <div
+                    class="task-list"
+                    data-task-list
+                ></div>
+            </section>
+
+        </main>
+    </div>
+
+
+    <!-- =========================
+         CREATE / EDIT MODAL
+    ========================== -->
+
+    <div
+        class="modal"
+        id="task-modal"
+        aria-hidden="true"
+    >
+
+        <div
+            class="modal__backdrop"
+            data-modal-close
+        ></div>
+
+        <div
+            class="modal__dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="task-modal-title"
+        >
+
+            <!-- Close -->
+            <button
+                class="modal__close"
+                type="button"
+                data-modal-close
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+            <!-- Modal heading -->
+            <h2
+                class="modal__title"
+                id="task-modal-title"
+            >
+                New Task
+            </h2>
+
+            <p
+                class="modal__subtitle"
+                id="task-modal-subtitle"
+            >
+                Create a task for the board.
+            </p>
+
+            <!-- Form general error -->
+            <p
+                class="form-error"
+                id="form-error"
+            ></p>
+
+
+            <!-- FORM -->
+            <form
+                id="task-form"
+                novalidate
+            >
+
+                <!-- Hidden ID.
+                     Empty = Create
+                     Has ID = Edit -->
+                <input
+                    id="task-id"
+                    name="taskId"
+                    type="hidden"
+                />
+
+
+                <!-- TITLE -->
+                <div class="form__field">
+                    <label for="task-title">
+                        Title
+                    </label>
+
+                    <input
+                        id="task-title"
+                        name="title"
+                        type="text"
+                        placeholder="Task Title"
+                        required
+                    />
+
+                    <p
+                        class="field-error"
+                        data-field-error="title"
+                    ></p>
+                </div>
+
+
+                <!-- DESCRIPTION -->
+                <div class="form__field">
+                    <label for="task-description">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="task-description"
+                        name="description"
+                        placeholder="Task description"
+                     ></textarea>
+
+                    <p
+                        class="field-error"
+                        data-field-error="description"
+                    ></p>
+                </div>
+
+
+                <!-- STATUS -->
+                <div class="form__field">
+                    <label for="task-status">
+                        Status
+                    </label>
+
+                    <select
+                        id="task-status"
+                        name="status"
+                    >
+                        <option value="ToDo">
+                            To Do
+                        </option>
+
+                        <option value="InProgress">
+                            In Progress
+                        </option>
+
+                        <option value="Done">
+                            Done
+                        </option>
+                    </select>
+
+                    <p
+                        class="field-error"
+                        data-field-error="status"
+                    ></p>
+                </div>
+
+
+                <!-- PRIORITY -->
+                <div class="form__field">
+                    <label for="task-priority">
+                        Priority
+                    </label>
+
+                    <select
+                        id="task-priority"
+                        name="priority"
+                    >
+                        <option value="High">
+                            High
+                        </option>
+
+                        <option value="Medium">
+                            Medium
+                        </option>
+
+                        <option value="Low">
+                            Low
+                        </option>
+                    </select>
+
+                    <p
+                        class="field-error"
+                        data-field-error="priority"
+                    ></p>
+                </div>
+
+
+                <!-- ASSIGNEE -->
+                <div class="form__field">
+                    <label for="task-assignee">
+                        Assignee
+                    </label>
+                 <input
+                  id="task-assignee"
+                  name="assignee"
+                  type="text"
+                  placeholder="Assigned user"
+                    /> 
+
+                    <p
+                        class="field-error"
+                        data-field-error="assignee"
+                    ></p>
+                </div>
+
+
+                <!-- BUTTONS -->
+                <div class="form__actions">
+
+                    <button
+                        class="secondary-button"
+                        type="button"
+                        data-modal-close
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        class="primary-button"
+                        type="submit"
+                    >
+                        Save Task
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
+    <script>
+
+        /* =========================
+           CONFIGURATION
+        ========================= */
+
+        const BASE_URL = "http://localhost:8001";
+
+        const STATUS_ORDER = [
+            "ToDo",
+            "InProgress",
+            "Done"
+        ];
+
+        const PRIORITY_ORDER = [
+            "High",
+            "Medium",
+            "Low"
+        ];
+
+        let tasks = [];
+        let draggedTaskId = null;
+        let originalTaskData = null;
+
+
+        /* =========================
+           DOM ELEMENTS
+        ========================= */
+
+        const columnContainers =
+            document.querySelectorAll(".column");
+
+        const errorMessage =
+            document.getElementById("error-message");
+
+        const modal =
+            document.getElementById("task-modal");
+
+        const taskForm =
+            document.getElementById("task-form");
+
+        const formError =
+            document.getElementById("form-error");
+
+        const modalTitle =
+            document.getElementById("task-modal-title");
+
+        const modalSubtitle =
+            document.getElementById("task-modal-subtitle");
+
+        const taskIdInput =
+            document.getElementById("task-id");
+
+        const titleInput =
+            document.getElementById("task-title");
+
+        const descriptionInput =
+            document.getElementById("task-description");
+
+        const statusInput =
+            document.getElementById("task-status");
+
+        const priorityInput =
+            document.getElementById("task-priority");
+
+        const assigneeInput =
+            document.getElementById("task-assignee");
+
+
+        const fieldErrorMap = {
+
+            title:
+                document.querySelector(
+                    '[data-field-error="title"]'
+                ),
+
+            description:
+                document.querySelector(
+                    '[data-field-error="description"]'
+                ),
+
+            status:
+                document.querySelector(
+                    '[data-field-error="status"]'
+                ),
+
+            priority:
+                document.querySelector(
+                    '[data-field-error="priority"]'
+                ),
+
+            assignee:
+                document.querySelector(
+                    '[data-field-error="assignee"]'
+                ),
+        };
+
+
+        /* =========================
+           HELPERS
+        ========================= */
+
+        function escapeHtml(value) {
+
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+
+        function getPriorityValue(priority) {
+
+            const index =
+                PRIORITY_ORDER.indexOf(priority);
+
+            return index === -1
+                ? PRIORITY_ORDER.length
+                : index;
+        }
+
+
+        function getIdValue(id) {
+
+            const parsed = Number(id);
+
+            return Number.isNaN(parsed)
+                ? String(id)
+                : parsed;
+        }
+
+
+        function sortTasks(taskList) {
+
+            return [...taskList].sort(
+                (left, right) => {
+
+                    const priorityDifference =
+                        getPriorityValue(left.priority) -
+                        getPriorityValue(right.priority);
+
+                    if (priorityDifference !== 0) {
+                        return priorityDifference;
+                    }
+
+                    const leftId =
+                        getIdValue(left.id);
+
+                    const rightId =
+                        getIdValue(right.id);
+
+                    if (leftId < rightId) {
+                        return -1;
+                    }
+
+                    if (leftId > rightId) {
+                        return 1;
+                    }
+
+                    return 0;
+                }
+            );
+        }
+
+
+        /* =========================
+           ERROR FUNCTIONS
+        ========================= */
+
+        function showError(message) {
+
+            errorMessage.textContent = message;
+            errorMessage.style.display = "block";
+        }
+
+
+        function hideError() {
+
+            errorMessage.textContent = "";
+            errorMessage.style.display = "none";
+        }
+
+
+        function clearFieldErrors() {
+
+            Object.values(fieldErrorMap)
+                .forEach((fieldError) => {
+
+                    if (fieldError) {
+                        fieldError.textContent = "";
+                    }
+
+                });
+        }
+
+
+        function clearFormError() {
+
+            formError.textContent = "";
+            formError.style.display = "none";
+        }
+
+
+        /* =========================
+           FORM / MODAL
+        ========================= */
+
+        function resetTaskForm() {
+
+            taskForm.reset();
+
+            taskIdInput.value = "";
+            originalTaskData = null;
+
+            clearFieldErrors();
+            clearFormError();
+        }
+
+
+        /*
+            This modal is used for BOTH:
+
+            Create
+            Edit
+        */
+        function openTaskModal(mode, task = null) {
+
+            resetTaskForm();
+
+
+            /* EDIT MODE */
+            if (mode === "edit" && task) {
+
+                modalTitle.textContent =
+                    "Edit Task";
+
+                modalSubtitle.textContent =
+                    "Update the details for this task.";
+
+
+                /*
+                    Store task ID so submit knows
+                    this is an EDIT.
+                */
+                taskIdInput.value =
+                    String(task.id);
+
+                originalTaskData = {
+                    title: task.title || "",
+                    description: task.description || "",
+                    status: task.status || "ToDo",
+                    priority: task.priority || "Medium",
+                    assignee: task.assignee || null,
+                };
+
+
+                /*
+                    Fill existing values.
+                */
+                titleInput.value =
+                    task.title || "";
+
+                descriptionInput.value =
+                    task.description || "";
+
+                statusInput.value =
+                    task.status || "ToDo";
+
+                priorityInput.value =
+                    task.priority || "Medium";
+
+                assigneeInput.value =
+                    task.assignee || "";
+            }
+
+
+            /* CREATE MODE */
+            else {
+
+                modalTitle.textContent =
+                    "New Task";
+
+                modalSubtitle.textContent =
+                    "Create a task for the board.";
+
+                statusInput.value = "ToDo";
+                priorityInput.value = "High";
+            }
+
+
+            modal.classList.add("is-open");
+
+            modal.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+
+            /*
+                Automatically focus title.
+            */
+            setTimeout(() => {
+                titleInput.focus();
+            }, 0);
+        }
+
+
+        function closeTaskModal() {
+
+            modal.classList.remove("is-open");
+
+            modal.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            resetTaskForm();
+        }
+
+
+        function getTaskById(taskId) {
+
+            return (
+                tasks.find(
+                    (task) =>
+                        String(task.id) ===
+                        String(taskId)
+                ) || null
+            );
+        }
+
+
+        /* =========================
+           DRAG AND DROP
+        ========================= */
+
+        function clearDropTargets() {
+
+            columnContainers.forEach(
+                (column) => {
+
+                    column.classList.remove(
+                        "is-drop-target"
+                    );
+
+                }
+            );
+        }
+
+
+        function updateTaskStatusLocally(
+            taskId,
+            nextStatus
+        ) {
+
+            tasks = tasks.map((task) => {
+
+                if (
+                    String(task.id) ===
+                    String(taskId)
+                ) {
+
+                    return {
+                        ...task,
+                        status: nextStatus,
+                    };
+                }
+
+                return task;
+            });
+        }
+
+
+        function handleDragStart(event) {
+
+            const taskId =
+                event.currentTarget.dataset.taskId;
+
+            const task =
+                getTaskById(taskId);
+
+            if (!task) {
+                return;
+            }
+
+            draggedTaskId = taskId;
+
+            event.dataTransfer.effectAllowed =
+                "move";
+
+            event.dataTransfer.setData(
+                "text/plain",
+                taskId
+            );
+
+            event.currentTarget.classList.add(
+                "is-dragging"
+            );
+        }
+
+
+        function handleDragEnd(event) {
+
+            event.currentTarget.classList.remove(
+                "is-dragging"
+            );
+
+            clearDropTargets();
+
+            draggedTaskId = null;
+        }
+
+
+        function handleDragOver(event) {
+
+            if (!draggedTaskId) {
+                return;
+            }
+
+            event.preventDefault();
+
+            event.dataTransfer.dropEffect =
+                "move";
+
+            const column =
+                event.currentTarget.closest(
+                    ".column"
+                );
+
+            if (column) {
+
+                clearDropTargets();
+
+                column.classList.add(
+                    "is-drop-target"
+                );
+            }
+        }
+
+
+        function handleDragLeave(event) {
+
+            const column =
+                event.currentTarget.closest(
+                    ".column"
+                );
+
+            if (!column) {
+                return;
+            }
+
+            const nextTarget =
+                event.relatedTarget;
+
+            if (
+                nextTarget &&
+                column.contains(nextTarget)
+            ) {
+                return;
+            }
+
+            column.classList.remove(
+                "is-drop-target"
+            );
+        }
+
+
+        async function handleDrop(event) {
+
+            if (!draggedTaskId) {
+                return;
+            }
+
+            event.preventDefault();
+
+
+            const column =
+                event.currentTarget.closest(
+                    ".column"
+                );
+
+            if (!column) {
+
+                clearDropTargets();
+                return;
+            }
+
+
+            const targetStatus =
+                column.dataset.status;
+
+            const taskId =
+                String(draggedTaskId);
+
+            const task =
+                getTaskById(taskId);
+
+
+            if (!task) {
+
+                clearDropTargets();
+                return;
+            }
+
+
+            /*
+                Already in this column.
+            */
+            if (task.status === targetStatus) {
+
+                clearDropTargets();
+
+                draggedTaskId = null;
+
+                return;
+            }
+
+
+            /*
+                Save old state in case
+                backend update fails.
+            */
+            const previousTasks =
+                tasks.map(
+                    (entry) => ({ ...entry })
+                );
+
+
+            hideError();
+
+
+            /*
+                Update UI immediately.
+            */
+            updateTaskStatusLocally(
+                taskId,
+                targetStatus
+            );
+
+            renderBoard(tasks);
+
+            clearDropTargets();
+
+
+            /*
+                Update backend.
+            */
+            try {
+
+                const response =
+                    await fetch(
+                        `${BASE_URL}/tasks/${taskId}`,
+                        {
+                            method: "PATCH",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+                            },
+
+                            body: JSON.stringify({
+                                status: targetStatus,
+                            }),
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    const errorPayload =
+                        await response
+                            .json()
+                            .catch(() => null);
+
+
+                    const errorMessageText =
+                        errorPayload?.detail ||
+                        `Request failed with status ${response.status}`;
+
+
+                    /*
+                        Restore old UI.
+                    */
+                    tasks =
+                        previousTasks.map(
+                            (entry) => ({
+                                ...entry
+                            })
+                        );
+
+                    renderBoard(tasks);
+
+
+                    showError(
+                        `Could not move task: ${errorMessageText}`
+                    );
+
+                    return;
+                }
+
+            } catch (error) {
+
+                /*
+                    Restore old state.
+                */
+                tasks =
+                    previousTasks.map(
+                        (entry) => ({
+                            ...entry
+                        })
+                    );
+
+                renderBoard(tasks);
+
+
+                showError(
+                    "Unable to move task. Please check your connection and try again."
+                );
+            }
+
+
+            draggedTaskId = null;
+        }
+
+
+        /* =========================
+           EDIT BUTTON
+        ========================= */
+
+        function bindTaskCardActions() {
+
+            document
+                .querySelectorAll(".edit-button")
+                .forEach((button) => {
+
+                    button.addEventListener(
+                        "click",
+                        (event) => {
+
+                            /*
+                                Prevent drag/card behaviour.
+                            */
+                            event.stopPropagation();
+
+
+                            const taskId =
+                                button.dataset.taskId;
+
+
+                            const task =
+                                getTaskById(taskId);
+
+
+                            if (task) {
+
+                                /*
+                                    Open same modal
+                                    but in EDIT mode.
+                                */
+                                openTaskModal(
+                                    "edit",
+                                    task
+                                );
+                            }
+
+                        }
+                    );
+
+                });
+        }
+
+
+        /* =========================
+           RENDER BOARD
+        ========================= */
+
+        function renderBoard(taskList) {
+
+            const groupedTasks =
+                STATUS_ORDER.reduce(
+                    (groups, status) => {
+
+                        groups[status] = [];
+
+                        return groups;
+
+                    },
+                    {}
+                );
+
+
+            taskList.forEach((task) => {
+
+                if (
+                    groupedTasks[
+                        task.status
+                    ]
+                ) {
+
+                    groupedTasks[
+                        task.status
+                    ].push(task);
+                }
+
+            });
+
+
+            columnContainers.forEach(
+                (column) => {
+
+                    const status =
+                        column.dataset.status;
+
+
+                    const taskListContainer =
+                        column.querySelector(
+                            "[data-task-list]"
+                        );
+
+
+                    const countLabel =
+                        column.querySelector(
+                            "[data-count]"
+                        );
+
+
+                    const columnTasks =
+                        sortTasks(
+                            groupedTasks[
+                                status
+                            ] || []
+                        );
+
+
+                    taskListContainer.innerHTML =
+                        "";
+
+
+                    countLabel.textContent =
+                        String(
+                            columnTasks.length
+                        );
+
+
+                    /*
+                        Empty column.
+                    */
+                    if (
+                        columnTasks.length === 0
+                    ) {
+
+                        const emptyState =
+                            document.createElement(
+                                "p"
+                            );
+
+
+                        emptyState.className =
+                            "task-card__description";
+
+
+                        emptyState.textContent =
+                            "No tasks yet";
+
+
+                        taskListContainer
+                            .appendChild(
+                                emptyState
+                            );
+
+
+                        return;
+                    }
+
+
+                    /*
+                        Create cards.
+                    */
+                    columnTasks.forEach(
+                        (task) => {
+
+                            const card =
+                                document
+                                    .createElement(
+                                        "article"
+                                    );
+
+
+                            card.className =
+                                "task-card";
+
+
+                            card.draggable =
+                                true;
+
+
+                            card.dataset.taskId =
+                                String(task.id);
+
+
+                            card.dataset.taskStatus =
+                                task.status;
+
+
+                            card.addEventListener(
+                                "dragstart",
+                                handleDragStart
+                            );
+
+
+                            card.addEventListener(
+                                "dragend",
+                                handleDragEnd
+                            );
+
+
+                            card.innerHTML = `
+
+                                <h3 class="task-card__title">
+                                    ${escapeHtml(task.title)}
+                                </h3>
+
+
+                                ${
+                                    task.description
+                                        ? `
+                                            <p class="task-card__description">
+                                                ${escapeHtml(task.description)}
+                                            </p>
+                                          `
+                                        : `
+                                            <p class="task-card__description">
+                                                No description
+                                            </p>
+                                          `
+                                }
+
+
+                                <div class="task-card__meta">
+
+                                    <span class="pill pill--priority">
+                                        ${escapeHtml(task.priority)}
+                                    </span>
+
+
+                                    <span class="pill pill--assignee">
+                                        ${escapeHtml(
+                                            task.assignee ||
+                                            "Unassigned"
+                                        )}
+                                    </span>
+
+                                </div>
+
+
+                                <div class="task-card__actions">
+
+                                    <button
+                                        class="edit-button"
+                                        type="button"
+                                        data-task-id="${escapeHtml(task.id)}"
+                                    >
+                                        Edit
+                                    </button>
+
+                                </div>
+                            `;
+
+
+                            taskListContainer
+                                .appendChild(card);
+                        }
+                    );
+
+                }
+            );
+
+
+            /*
+                IMPORTANT:
+                Activate every Edit button
+                after cards are rendered.
+            */
+            bindTaskCardActions();
+
+
+            /*
+                Drag-and-drop listeners
+                on full columns.
+            */
+            columnContainers.forEach(
+                (column) => {
+
+                    column.removeEventListener(
+                        "dragover",
+                        handleDragOver
+                    );
+
+                    column.removeEventListener(
+                        "dragleave",
+                        handleDragLeave
+                    );
+
+                    column.removeEventListener(
+                        "drop",
+                        handleDrop
+                    );
+
+
+                    column.addEventListener(
+                        "dragover",
+                        handleDragOver
+                    );
+
+                    column.addEventListener(
+                        "dragleave",
+                        handleDragLeave
+                    );
+
+                    column.addEventListener(
+                        "drop",
+                        handleDrop
+                    );
+
+                }
+            );
+        }
+
+
+        /* =========================
+           VALIDATION
+        ========================= */
+
+        function setFieldError(
+            fieldName,
+            message
+        ) {
+
+            const fieldError =
+                fieldErrorMap[fieldName];
+
+            if (fieldError) {
+
+                fieldError.textContent =
+                    message;
+            }
+        }
+
+
+        function showFormError(message) {
+
+            if (!message) {
+
+                clearFormError();
+                return;
+            }
+
+            formError.textContent =
+                message;
+
+            formError.style.display =
+                "block";
+        }
+
+
+        function mapServerErrors(
+            errorPayload
+        ) {
+
+            const detail =
+                errorPayload?.detail;
+
+
+            clearFieldErrors();
+            clearFormError();
+
+
+            if (Array.isArray(detail)) {
+
+                const fieldErrors =
+                    detail.filter(
+                        (entry) => {
+
+                            const location =
+                                entry?.loc || [];
+
+
+                            return location.some(
+                                (item) =>
+                                    typeof item === "string" &&
+                                    item !== "body" &&
+                                    item !== "query" &&
+                                    item !== "path"
+                            );
+                        }
+                    );
+
+
+                if (fieldErrors.length > 0) {
+
+                    fieldErrors.forEach(
+                        (entry) => {
+
+                            const location =
+                                entry?.loc || [];
+
+
+                            const fieldName =
+                                location.find(
+                                    (item) =>
+                                        typeof item === "string" &&
+                                        item !== "body" &&
+                                        item !== "query" &&
+                                        item !== "path"
+                                );
+
+
+                            if (
+                                fieldName &&
+                                fieldErrorMap[
+                                    fieldName
+                                ]
+                            ) {
+
+                                setFieldError(
+                                    fieldName,
+                                    entry?.msg ||
+                                    "Invalid value"
+                                );
+                            }
+
+                        }
+                    );
+                }
+
+
+                const fallbackMessage =
+                    detail
+                        .map(
+                            (entry) =>
+                                entry?.msg
+                        )
+                        .filter(Boolean)
+                        .join(" ");
+
+
+                if (fallbackMessage) {
+
+                    showFormError(
+                        fallbackMessage
+                    );
+                }
+
+                return;
+            }
+
+
+            if (
+                typeof detail ===
+                    "string" &&
+                detail
+            ) {
+
+                showFormError(detail);
+
+                return;
+            }
+
+
+            if (detail?.msg) {
+
+                showFormError(
+                    detail.msg
+                );
+
+                return;
+            }
+
+
+            showFormError(
+                "Unable to save task. Please try again."
+            );
+        }
+
+
+        /* =========================
+           CREATE + EDIT SUBMIT
+        ========================= */
+
+        async function handleTaskSubmit(
+            event
+        ) {
+
+            event.preventDefault();
+
+
+            clearFieldErrors();
+            clearFormError();
+
+
+            /*
+                Validate title.
+            */
+            const title =
+                titleInput.value.trim();
+
+
+            if (!title) {
+
+                setFieldError(
+                    "title",
+                    "Title is required"
+                );
+
+                titleInput.focus();
+
+                return;
+            }
+
+
+            const taskId =
+                taskIdInput.value;
+
+            let payload;
+
+            if (taskId && originalTaskData) {
+
+                const currentValues = {
+                    title,
+                    description:
+                        descriptionInput.value,
+                    status:
+                        statusInput.value,
+                    priority:
+                        priorityInput.value,
+                    assignee:
+                        assigneeInput.value.trim() === ""
+                            ? null
+                            : assigneeInput.value.trim(),
+                };
+
+                payload = {};
+
+                if (
+                    currentValues.title !==
+                    originalTaskData.title.trim()
+                ) {
+                    payload.title =
+                        currentValues.title;
+                }
+
+                if (
+                    currentValues.description !==
+                    originalTaskData.description
+                ) {
+                    payload.description =
+                        currentValues.description;
+                }
+
+                if (
+                    currentValues.status !==
+                    originalTaskData.status
+                ) {
+                    payload.status =
+                        currentValues.status;
+                }
+
+                if (
+                    currentValues.priority !==
+                    originalTaskData.priority
+                ) {
+                    payload.priority =
+                        currentValues.priority;
+                }
+
+                if (
+                    currentValues.assignee !==
+                    originalTaskData.assignee
+                ) {
+                    payload.assignee =
+                        currentValues.assignee;
+                }
+
+                if (Object.keys(payload).length === 0) {
+                    closeTaskModal();
+                    return;
+                }
+
+            } else {
+
+                payload = {
+
+                    title,
+
+                    description:
+                        descriptionInput.value,
+
+                    status:
+                        statusInput.value,
+
+                    priority:
+                        priorityInput.value,
+
+                    assignee:
+                        assigneeInput.value.trim() === ""
+                            ? null
+                            : assigneeInput.value.trim(),
+                };
+            }
+
+
+            const endpoint =
+                taskId
+                    ? `${BASE_URL}/tasks/${taskId}`
+                    : `${BASE_URL}/tasks`;
+
+
+            /*
+                CREATE = POST
+                EDIT   = PATCH
+            */
+            const method =
+                taskId
+                    ? "PATCH"
+                    : "POST";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        endpoint,
+                        {
+                            method,
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    payload
+                                ),
+                        }
+                    );
+
+
+                /*
+                    Successful Create/Edit.
+                */
+                if (response.ok) {
+
+                    closeTaskModal();
+
+                    await fetchTasks();
+
+                    return;
+                }
+
+
+                const errorPayload =
+                    await response
+                        .json()
+                        .catch(() => null);
+
+
+                /*
+                    Validation error.
+                */
+                if (
+                    response.status === 422
+                ) {
+
+                    mapServerErrors(
+                        errorPayload
+                    );
+
+                    return;
+                }
+
+
+                const errorMessageText =
+                    errorPayload?.detail ||
+                    `Request failed with status ${response.status}`;
+
+
+                showFormError(
+                    errorMessageText
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Unable to save task:",
+                    error
+                );
+
+
+                showFormError(
+                    "Unable to save task. Please check your connection and try again."
+                );
+            }
+        }
+
+
+        /* =========================
+           FETCH TASKS
+        ========================= */
+
+        async function fetchTasks() {
+
+            hideError();
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${BASE_URL}/tasks`
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Request failed with status ${response.status}`
+                    );
+                }
+
+
+                const payload =
+                    await response.json();
+
+
+                tasks =
+                    Array.isArray(payload)
+                        ? payload
+                        : [];
+
+
+                renderBoard(tasks);
+
+
+            } catch (error) {
+
+                console.error(
+                    "Unable to load tasks:",
+                    error
+                );
+
+
+                showError(
+                    "Unable to connect to the backend. Make sure the FastAPI server is running on port 8001."
+                );
+
+
+                renderBoard([]);
+            }
+        }
+
+
+        /* =========================
+           EVENT LISTENERS
+        ========================= */
+
+
+        /*
+            NEW TASK BUTTON
+        */
+        document
+            .getElementById(
+                "new-task-button"
+            )
+            .addEventListener(
+                "click",
+                () => {
+
+                    openTaskModal(
+                        "create"
+                    );
+
+                }
+            );
+
+
+        /*
+            Cancel / X / Backdrop
+        */
+        document
+            .querySelectorAll(
+                "[data-modal-close]"
+            )
+            .forEach(
+                (element) => {
+
+                    element.addEventListener(
+                        "click",
+                        closeTaskModal
+                    );
+
+                }
+            );
+
+
+        /*
+            Click outside modal.
+        */
+        modal.addEventListener(
+            "click",
+            (event) => {
+
+                if (
+                    event.target === modal
+                ) {
+
+                    closeTaskModal();
+                }
+
+            }
+        );
+
+
+        /*
+            Escape key closes modal.
+        */
+        document.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (
+                    event.key === "Escape" &&
+                    modal.classList.contains(
+                        "is-open"
+                    )
+                ) {
+
+                    closeTaskModal();
+                }
+
+            }
+        );
+
+
+        /*
+            Save Create/Edit form.
+        */
+        taskForm.addEventListener(
+            "submit",
+            handleTaskSubmit
+        );
+
+
+        /* =========================
+           START APPLICATION
+        ========================= */
+
+        fetchTasks();
+
+    </script>
+
+</body>
+</html>
