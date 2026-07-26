@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 import pytest
 
 from app.models import TaskPriority, TaskStatus
@@ -24,6 +26,20 @@ def test_create_task_valid_returns_201_with_full_body(client):
     assert data["priority"] == TaskPriority.HIGH.value
     assert data["assignee"] == "Alice"
     assert data["created_at"] == data["updated_at"]
+
+
+def test_create_task_with_due_date_returns_due_date_in_response(client):
+    response = client.post(
+        "/tasks",
+        json={
+            "title": "Task with due date",
+            "due_date": "2026-07-28",
+        },
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["due_date"] == "2026-07-28"
 
 
 def test_create_task_missing_title_returns_422(client):
@@ -86,6 +102,61 @@ def test_list_tasks_filter_by_priority_returns_only_matches(client):
     assert [task["title"] for task in data] == ["High task", "Another high task"]
 
 
+def test_list_tasks_filter_by_overdue_combines_with_existing_filters(client):
+    overdue_date = (date.today() - timedelta(days=1)).isoformat()
+    today_date = date.today().isoformat()
+    future_date = (date.today() + timedelta(days=1)).isoformat()
+
+    client.post(
+        "/tasks",
+        json={
+            "title": "Overdue high todo",
+            "status": TaskStatus.TODO.value,
+            "priority": TaskPriority.HIGH.value,
+            "due_date": overdue_date,
+        },
+    )
+    client.post(
+        "/tasks",
+        json={
+            "title": "Due today high todo",
+            "status": TaskStatus.TODO.value,
+            "priority": TaskPriority.HIGH.value,
+            "due_date": today_date,
+        },
+    )
+    client.post(
+        "/tasks",
+        json={
+            "title": "Overdue done high",
+            "status": TaskStatus.DONE.value,
+            "priority": TaskPriority.HIGH.value,
+            "due_date": overdue_date,
+        },
+    )
+    client.post(
+        "/tasks",
+        json={
+            "title": "Future medium todo",
+            "status": TaskStatus.TODO.value,
+            "priority": TaskPriority.MEDIUM.value,
+            "due_date": future_date,
+        },
+    )
+
+    response = client.get(
+        "/tasks",
+        params={
+            "overdue": "true",
+            "status": TaskStatus.TODO.value,
+            "priority": TaskPriority.HIGH.value,
+        },
+    )
+
+    assert response.status_code == 200
+    assert [task["title"] for task in response.json()] == ["Overdue high todo"]
+
+
 def test_get_task_by_id_returns_task(created_task, client):
     response = client.get(f"/tasks/{created_task['id']}")
 
@@ -129,6 +200,29 @@ def test_patch_valid_transition_todo_to_inprogress_returns_200(created_task, cli
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == TaskStatus.IN_PROGRESS.value
+
+
+def test_create_task_with_messy_duplicate_tags_returns_normalized_tags(client):
+    response = client.post(
+        "/tasks",
+        json={"title": "Tagged task", "tags": [" Urgent ", "urgent", "", "Bug"]},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["tags"] == ["Urgent", "Bug"]
+
+
+def test_patch_task_tags_can_be_cleared(client):
+    created_response = client.post(
+        "/tasks",
+        json={"title": "Task with tags", "tags": ["Work", "Home"]},
+    )
+    task_id = created_response.json()["id"]
+
+    response = client.patch(f"/tasks/{task_id}", json={"tags": []})
+
+    assert response.status_code == 200
+    assert response.json()["tags"] == []
 
 
 def test_patch_invalid_transition_todo_to_done_returns_422(created_task, client):

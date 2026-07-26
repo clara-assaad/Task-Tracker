@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
 
-from app.models import TaskCreate, TaskResponse, TaskUpdate
+from app.models import TaskCreate, TaskResponse, TaskStatus, TaskUpdate
 
 _tasks: dict[str, TaskResponse] = {}
 
@@ -18,6 +18,8 @@ def add_task(payload: TaskCreate) -> TaskResponse:
         status=payload.status,
         priority=payload.priority,
         assignee=payload.assignee,
+        due_date=payload.due_date,
+        tags=payload.tags,
         created_at=now,
         updated_at=now,
     )
@@ -25,12 +27,20 @@ def add_task(payload: TaskCreate) -> TaskResponse:
     return task
 
 
-def get_all_tasks(status=None, priority=None) -> list[TaskResponse]:
+def _is_overdue(task: TaskResponse) -> bool:
+    if task.due_date is None:
+        return False
+    return task.due_date < date.today() and task.status != TaskStatus.DONE
+
+
+def get_all_tasks(status=None, priority=None, overdue=None) -> list[TaskResponse]:
     tasks = list(_tasks.values())
     if status is not None:
         tasks = [task for task in tasks if task.status == status]
     if priority is not None:
         tasks = [task for task in tasks if task.priority == priority]
+    if overdue is not None:
+        tasks = [task for task in tasks if _is_overdue(task) is overdue]
     return sorted(tasks, key=lambda task: task.created_at)
 
 
