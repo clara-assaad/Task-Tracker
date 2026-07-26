@@ -9,73 +9,92 @@
     <style>
         :root {
             color-scheme: light;
+
+            /* Colors */
             --bg: #f5f7fb;
             --panel: #ffffff;
             --border: #dfe5ee;
             --text: #1f2937;
             --muted: #6b7280;
             --accent: #2563eb;
+            --accent-hover: #1d4ed8;
             --accent-soft: #dbeafe;
+
+            /* Geometry */
+            --radius: 12px;
+            --radius-sm: 8px;
+            --pill-radius: 999px;
+            --page-padding: 24px;
+            --gap: 16px;
+
+            /* Elevation */
+            --shadow-sm: 0 2px 8px rgba(15,23,42,0.04);
+            --shadow-lg: 0 16px 48px rgba(15,23,42,0.12);
         }
 
-        * {
+        *, *::before, *::after {
             box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
         }
 
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.4;
         }
 
         .page {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 24px;
+            padding: var(--page-padding);
         }
 
-        /* =========================
-           HEADER
-        ========================= */
-
+        /* Header */
         header {
             background: linear-gradient(135deg, #1f2937, #374151);
             color: #ffffff;
-            padding: 24px 28px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-            margin-bottom: 24px;
+            padding: 20px 22px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 20px;
 
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 16px;
+            gap: var(--gap);
         }
 
         header h1 {
-            margin: 0 0 8px;
-            font-size: 2rem;
+            margin: 0 0 6px;
+            font-size: 1.95rem;
+            font-weight: 700;
         }
 
         header p {
             margin: 0;
             color: #d1d5db;
+            font-size: 0.95rem;
         }
 
-        /* =========================
-           BUTTONS
-        ========================= */
-
+        /* Buttons (shared) */
         .header-button,
         .primary-button,
         .secondary-button {
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             padding: 10px 14px;
             cursor: pointer;
             font-size: 0.95rem;
             font-weight: 600;
+            transition: background-color 160ms cubic-bezier(.2,.8,.2,1), transform 120ms ease;
+            will-change: background-color, transform;
         }
 
         .header-button,
@@ -86,7 +105,7 @@
 
         .header-button:hover,
         .primary-button:hover {
-            background: #1d4ed8;
+            background: var(--accent-hover);
         }
 
         .secondary-button {
@@ -98,26 +117,34 @@
             background: #d1d5db;
         }
 
-        /* =========================
-           BOARD
-        ========================= */
+        .header-button:active,
+        .primary-button:active,
+        .secondary-button:active {
+            transform: translateY(1px);
+        }
 
+        .header-button:focus-visible,
+        .primary-button:focus-visible,
+        .secondary-button:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+            border-radius: var(--radius-sm);
+        }
+
+        /* Board layout */
         .board {
             display: grid;
-
-            /* Three columns on desktop */
             grid-template-columns: repeat(3, minmax(0, 1fr));
-
             gap: 18px;
         }
 
         .column {
             background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius);
             padding: 16px;
             min-height: 320px;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            box-shadow: var(--shadow-sm);
         }
 
         .column__header {
@@ -130,6 +157,7 @@
         .column__header h2 {
             margin: 0;
             font-size: 1.1rem;
+            font-weight: 600;
         }
 
         .column__count {
@@ -137,7 +165,7 @@
             color: var(--muted);
             background: #f3f4f6;
             padding: 4px 8px;
-            border-radius: 999px;
+            border-radius: var(--pill-radius);
         }
 
         .task-list {
@@ -146,22 +174,23 @@
             gap: 12px;
         }
 
-        /* =========================
-           TASK CARDS
-        ========================= */
-
+        /* Task cards */
         .task-card {
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 12px;
             background: #fcfdff;
             cursor: grab;
-            transition: opacity 0.15s ease, transform 0.15s ease;
+            transition: box-shadow 160ms ease, opacity 120ms ease, transform 120ms ease;
+        }
+
+        .task-card:hover {
+            box-shadow: 0 6px 18px rgba(15,23,42,0.06);
         }
 
         .task-card.is-dragging {
-            opacity: 0.7;
-            transform: scale(0.98);
+            opacity: 0.75;
+            transform: scale(0.99);
         }
 
         .column.is-drop-target {
@@ -172,6 +201,7 @@
         .task-card__title {
             margin: 0 0 6px;
             font-size: 1rem;
+            font-weight: 600;
         }
 
         .task-card__description {
@@ -193,10 +223,11 @@
         .pill {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             padding: 4px 8px;
-            border-radius: 999px;
+            border-radius: var(--pill-radius);
             font-weight: 600;
+            font-size: 0.9rem;
         }
 
         .pill--priority {
@@ -219,19 +250,17 @@
             background: #111827;
             color: #ffffff;
             padding: 7px 10px;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 0.9rem;
+            transition: background-color 140ms ease;
         }
 
         .edit-button:hover {
             background: #1f2937;
         }
 
-        /* =========================
-           ERROR MESSAGES
-        ========================= */
-
+        /* Errors */
         .error-message,
         .form-error {
             background: #fee2e2;
@@ -243,18 +272,13 @@
             display: none;
         }
 
-        /* =========================
-           MODAL
-        ========================= */
-
+        /* Modal */
         .modal {
             position: fixed;
             inset: 0;
-
             display: none;
             align-items: center;
             justify-content: center;
-
             padding: 20px;
             z-index: 1000;
         }
@@ -266,26 +290,17 @@
         .modal__backdrop {
             position: absolute;
             inset: 0;
-            background: rgba(15, 23, 42, 0.65);
+            background: rgba(15,23,42,0.65);
         }
 
-        /*
-            Smaller modal.
-            No internal scrollbar.
-        */
         .modal__dialog {
             position: relative;
-
             width: min(92%, 520px);
-
             background: var(--panel);
             border: 1px solid var(--border);
             border-radius: 14px;
-
             padding: 22px 24px;
-
-            box-shadow: 0 16px 48px rgba(15, 23, 42, 0.2);
-
+            box-shadow: var(--shadow-lg);
             z-index: 1;
         }
 
@@ -293,11 +308,9 @@
             position: absolute;
             top: 12px;
             right: 12px;
-
             border: none;
             background: transparent;
             color: var(--muted);
-
             font-size: 1.4rem;
             cursor: pointer;
         }
@@ -313,16 +326,11 @@
             font-size: 0.95rem;
         }
 
-        /* =========================
-           FORM
-        ========================= */
-
+        /* Form */
         .form__field {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-
-            /* Smaller spacing */
+            gap: 6px;
             margin-bottom: 10px;
         }
 
@@ -335,12 +343,9 @@
         .form__field select,
         .form__field textarea {
             width: 100%;
-
             border: 1px solid var(--border);
-            border-radius: 8px;
-
-            padding: 9px 11px;
-
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
             font: inherit;
             color: var(--text);
             background: #ffffff;
@@ -349,7 +354,8 @@
         .form__field input:focus,
         .form__field select:focus,
         .form__field textarea:focus {
-            outline: 2px solid var(--accent-soft);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
             border-color: var(--accent);
         }
 
@@ -358,10 +364,6 @@
             resize: vertical;
         }
 
-        /*
-            Do not reserve empty space
-            when there is no field error.
-        */
         .field-error {
             margin: 0;
             font-size: 0.85rem;
@@ -379,22 +381,26 @@
             margin-top: 14px;
         }
 
-        /* =========================
-           RESPONSIVE
-        ========================= */
-
+        /* Responsive */
         @media (max-width: 900px) {
             header {
                 flex-direction: column;
                 align-items: flex-start;
             }
 
-            /*
-                Only small screens become
-                one column.
-            */
             .board {
                 grid-template-columns: 1fr;
+            }
+        }
+
+        /* Respect reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            .header-button,
+            .primary-button,
+            .secondary-button,
+            .task-card,
+            .edit-button {
+                transition: none !important;
             }
         }
     </style>
