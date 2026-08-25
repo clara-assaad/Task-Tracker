@@ -13,8 +13,10 @@
 ## CI evidence
 
 - Workflow file: `.github/workflows/ci.yml`
-- Latest run link or note: Pending — the `final-project` branch has not been pushed, so no GitHub Actions run is available.
+- Latest run link or note: GitHub Actions CI run #5 on `final-project`, commit `901763a` — Success (17s); the test job succeeded.
+- Python version used by CI: 3.12.14
 - Test command used by CI: `pytest -v`
+- Test result: 21 tests collected, 21 passed in 0.16s.
 - Shortcut check: no continue-on-error / no || true / pytest is not skipped.
 
 ## Docker evidence
@@ -33,4 +35,4 @@
 | The permitted transitions are `ToDo` → `InProgress`, `InProgress` → `Done`, and `Done` → `InProgress`. | `README.md`; `VALID_TRANSITIONS` in `app/business_rules.py`; transition tests in `tests/test_tasks.py` | Confirmed by code and tests. | None |
 | Tags are trimmed and de-duplicated case-insensitively. | `README.md`; `normalize_tags` in `app/models.py`; tag normalization test in `tests/test_tasks.py` | Confirmed by code and tests. | None |
 | The Docker image uses a multi-stage build, copies only `app/`, and runs as a non-root user. | `README.md`; `Dockerfile` builder/runtime stages, `COPY --chown=app:app app/ ./app/`, and `USER app`; verified Docker build, container run, and `/health` check | Confirmed as configuration. The image built successfully, the container ran successfully, and `/health` returned HTTP 200. | None |
-| CI installs dependencies and runs `pytest -v`. | `README.md`; `.github/workflows/ci.yml` | `pytest -v` is configured. No `continue-on-error`, `|| true`, or skipped pytest shortcut was found. The extra leading whitespace before `pip install pytest httpx` is inside the `run: |` block and is harmless. No CI configuration change is required. Actual GitHub Actions execution is Pending until the `final-project` branch is pushed. | None |
+| CI installs dependencies and runs `pytest -v`. | `README.md`; `.github/workflows/ci.yml`; GitHub Actions CI run #5 on `final-project`, commit `901763a` | Confirmed. CI succeeded in 17s using Python 3.12.14, and `pytest -v` collected 21 tests and passed all 21 in 0.16s. No `continue-on-error`, `|| true`, or skipped pytest shortcut was found. | None |

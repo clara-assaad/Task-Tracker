@@ -115,7 +115,7 @@ The GitHub Actions workflow in [`.github/workflows/ci.yml`](.github/workflows/ci
 - Installs the application and test dependencies.
 - Runs `pytest -v`.
 
-The workflow is configured, but the final-project CI result will be verified after the branch is pushed.
+The `final-project` GitHub Actions CI run was verified successfully: CI ran `pytest -v`, and all 21 tests passed.
 
 ## Final Project
 
@@ -124,7 +124,7 @@ The workflow is configured, but the final-project CI result will be verified aft
 ### What this submission demonstrates
 
 - Existing Task Tracker app still runs inside the intended course scope.
-- CI is configured to run `pytest -v` on push; the actual final-project GitHub Actions execution is pending until the branch is pushed.
+- The `final-project` GitHub Actions CI run completed successfully with all 21 tests passing under `pytest -v`.
 - The Docker image built successfully, and the container ran successfully with `/health` returning HTTP 200.
 - AI review, security, release verification, and ownership evidence are documented in `docs/`.
 
