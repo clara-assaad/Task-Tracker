@@ -9,11 +9,16 @@ router = APIRouter(tags=["Health"])
 
 @router.get("/health", response_model=HealthResponse)
 def health_check() -> HealthResponse:
-    """
-    Simple health check endpoint.
+    """Performs a simple health check.
 
-    Returns HTTP 200 with a JSON body indicating service status
-    and the current UTC timestamp in ISO 8601 format.
+    Returns:
+        HealthResponse: A HealthResponse object indicating service status ("ok")
+        and the current UTC timestamp in ISO 8601 format.
+
+    Examples:
+        >>> # Request to health check
+        >>> client.get("/health")
+        200 OK
     """
     return HealthResponse(
         status="ok",

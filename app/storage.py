@@ -9,6 +9,14 @@ _tasks: dict[str, TaskResponse] = {}
 
 
 def add_task(payload: TaskCreate) -> TaskResponse:
+    """Adds a new task to the in-memory storage.
+
+    Args:
+        payload (TaskCreate): The task creation data.
+
+    Returns:
+        TaskResponse: The created task response object.
+    """
     task_id = str(len(_tasks) + 1)
     now = datetime.now(timezone.utc)
     task = TaskResponse(
@@ -34,6 +42,16 @@ def _is_overdue(task: TaskResponse) -> bool:
 
 
 def get_all_tasks(status=None, priority=None, overdue=None) -> list[TaskResponse]:
+    """Retrieves all tasks with optional filtering, sorted by creation time.
+
+    Args:
+        status (TaskStatus | None): Filter tasks by status.
+        priority (TaskPriority | None): Filter tasks by priority.
+        overdue (bool | None): Filter tasks by overdue status.
+
+    Returns:
+        list[TaskResponse]: A sorted list of task response objects.
+    """
     tasks = list(_tasks.values())
     if status is not None:
         tasks = [task for task in tasks if task.status == status]
@@ -45,10 +63,27 @@ def get_all_tasks(status=None, priority=None, overdue=None) -> list[TaskResponse
 
 
 def get_task_by_id(task_id: str) -> Optional[TaskResponse]:
+    """Retrieves a task by its ID.
+
+    Args:
+        task_id (str): The unique identifier of the task.
+
+    Returns:
+        Optional[TaskResponse]: The task if found, otherwise None.
+    """
     return _tasks.get(task_id)
 
 
 def update_task(task_id: str, payload: TaskUpdate) -> Optional[TaskResponse]:
+    """Updates an existing task in memory.
+
+    Args:
+        task_id (str): The unique identifier of the task.
+        payload (TaskUpdate): The data to update.
+
+    Returns:
+        Optional[TaskResponse]: The updated task object if found, otherwise None.
+    """
     existing_task = _tasks.get(task_id)
     if existing_task is None:
         return None
@@ -67,6 +102,14 @@ def update_task(task_id: str, payload: TaskUpdate) -> Optional[TaskResponse]:
 
 
 def delete_task(task_id: str) -> bool:
+    """Deletes a task from in-memory storage.
+
+    Args:
+        task_id (str): The unique identifier of the task.
+
+    Returns:
+        bool: True if the task was found and deleted, otherwise False.
+    """
     return _tasks.pop(task_id, None) is not None
 
 
